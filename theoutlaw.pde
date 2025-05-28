@@ -1,3 +1,5 @@
+// Hitbox ajustada para o cowboy e inimigos
+
 import processing.sound.*;
 
 PImage[][] cowboySprites = new PImage[4][4];
@@ -19,15 +21,15 @@ ArrayList<Obstaculo> obstaculos;
 ArrayList<ObstaculoD> obstaculosD;
 
 int score = 0;
-int highScore = 0;  // Recorde
+int highScore = 0;
 int lives = 3;
-int wave = 1;       // Wave atual
+int wave = 1;
 
 String gameState = "menu";
 
 boolean imune = false;
 int imuneTimer = 0;
-int imuneDuration = 120;
+int imuneDuration = 60;
 
 void setup() {
   size(800, 600);
@@ -46,21 +48,22 @@ void setup() {
   obstaculos = new ArrayList<Obstaculo>();
   obstaculosD = new ArrayList<ObstaculoD>();
 
+  // Exemplo fixo - você pode substituir por geração aleatória se quiser
   obstaculos.add(new Obstaculo(300, 150, 32, 64));
   obstaculos.add(new Obstaculo(300, 300, 32, 64));
-  obstaculos.add(new Obstaculo(460, 150, 32, 64)); 
+  obstaculos.add(new Obstaculo(460, 150, 32, 64));
   obstaculos.add(new Obstaculo(460, 300, 32, 64));
-  obstaculosD.add(new ObstaculoD(300, 400, 64, 32)); 
-  obstaculosD.add(new ObstaculoD(424, 400, 64, 32)); 
+  obstaculosD.add(new ObstaculoD(300, 400, 64, 32));
+  obstaculosD.add(new ObstaculoD(424, 400, 64, 32));
 
   enemies = new ArrayList<Enemy>();
   for (int i = 0; i < numEnemies; i++) {
     enemies.add(new Enemy(random(width), random(height), 1.5));
   }
-  
+
   trilhaSonora = new SoundFile(this, "trilha.mp3");
   trilhaSonora.amp(0.3);
-  trilhaSonora.loop(); 
+  trilhaSonora.loop();
 }
 
 void draw() {
@@ -92,13 +95,8 @@ void draw() {
     return;
   }
 
-  for (Obstaculo o : obstaculos) {
-    o.display();
-  }
-  
-  for (ObstaculoD o : obstaculosD) {
-    o.display();
-  }
+  for (Obstaculo o : obstaculos) o.display();
+  for (ObstaculoD o : obstaculosD) o.display();
 
   cowboy.update();
   cowboy.display();
@@ -115,13 +113,10 @@ void draw() {
     Enemy e = enemies.get(i);
     e.moveTowards(cowboy.x, cowboy.y);
     e.display();
-
     if (!imune && e.hitsCowboy(cowboy.x, cowboy.y)) {
       lives--;
       imune = true;
-      if (lives <= 0) {
-        gameState = "gameover";
-      }
+      if (lives <= 0) gameState = "gameover";
     }
   }
 
@@ -140,42 +135,26 @@ void draw() {
       }
     }
 
-    if (b.offscreen()) {
-      bullets.remove(i);
-    }
+    if (b.offscreen()) bullets.remove(i);
   }
 
-  // Atualizar recorde
-  if (score > highScore) {
-    highScore = score;
-  }
+  if (score > highScore) highScore = score;
 
-  // Mostrar HUD no topo da tela
   fill(255);
   textSize(16);
   textAlign(LEFT, TOP);
   text("Pontuação: " + score, 10, 10);
-
-  String highScoreText = "Recorde: " + highScore;
-  text(highScoreText, 10, 30);
-
-  String waveText = "Wave: " + wave;
-  float waveTextWidth = textWidth(waveText);
-  text(waveText, width - waveTextWidth - 10, 10);
-
-  String vidasText = "Vidas: " + lives;
-  float vidasTextWidth = textWidth(vidasText);
-  text(vidasText, width - vidasTextWidth - 10, 30);
-
+  text("Recorde: " + highScore, 10, 30);
+  text("Wave: " + wave, width - 100, 10);
+  text("Vidas: " + lives, width - 100, 30);
   if (imune) {
     fill(255, 0, 0);
     text("IMUNE!", 10, 60);
   }
 
-  // Quando acabar os inimigos, aumenta wave e inimigos
   if (enemies.size() == 0) {
     wave++;
-    numEnemies += 2; // aumenta inimigos a cada wave
+    numEnemies += 2;
     for (int i = 0; i < numEnemies; i++) {
       enemies.add(new Enemy(random(width), random(height), 1.5));
     }
@@ -209,7 +188,7 @@ void startGame() {
   cowboy = new Cowboy(width / 2, height / 2);
   bullets.clear();
   enemies.clear();
-  numEnemies = 5;  // reset quantidade de inimigos na wave 1
+  numEnemies = 5;
   for (int i = 0; i < numEnemies; i++) {
     enemies.add(new Enemy(random(width), random(height), 1.5));
   }
@@ -239,7 +218,6 @@ class Cowboy {
   float x, y;
   float dirX = 0, dirY = 0;
   int lastDir = 0;
-
   float lastShootDirX = 0;
   float lastShootDirY = -1;
 
@@ -253,22 +231,10 @@ class Cowboy {
     dirY = 0;
 
     if (keyPressed) {
-      if (keyCode == UP) {
-        dirY = -1;
-        lastDir = 3;
-      }
-      if (keyCode == DOWN) {
-        dirY = 1;
-        lastDir = 0;
-      }
-      if (keyCode == LEFT) {
-        dirX = -1;
-        lastDir = 1;
-      }
-      if (keyCode == RIGHT) {
-        dirX = 1;
-        lastDir = 2;
-      }
+      if (keyCode == UP) { dirY = -1; lastDir = 3; }
+      if (keyCode == DOWN) { dirY = 1; lastDir = 0; }
+      if (keyCode == LEFT) { dirX = -1; lastDir = 1; }
+      if (keyCode == RIGHT) { dirX = 1; lastDir = 2; }
     }
 
     if (dirX != 0 || dirY != 0) {
@@ -281,16 +247,10 @@ class Cowboy {
 
     boolean colidiu = false;
     for (Obstaculo o : obstaculos) {
-      if (o.colide(nextX, nextY, 40)) {
-        colidiu = true;
-        break;
-      }
-    } 
+      if (o.colide(nextX, nextY, 20)) { colidiu = true; break; }
+    }
     for (ObstaculoD o : obstaculosD) {
-      if (o.colide(nextX, nextY, 40)) {
-        colidiu = true;
-        break;
-      }
+      if (o.colide(nextX, nextY, 20)) { colidiu = true; break; }
     }
 
     if (!colidiu) {
@@ -301,12 +261,8 @@ class Cowboy {
 
   void display() {
     PImage sprite = cowboySprites[lastDir][animationFrame % 4];
-    if (sprite != null) {
-      image(sprite, x, y, 40, 40);
-    } else {
-      fill(255, 200, 0);
-      ellipse(x, y, 40, 40);
-    }
+    if (sprite != null) image(sprite, x, y, 40, 40);
+    else { fill(255, 200, 0); ellipse(x, y, 40, 40); }
   }
 }
 
@@ -325,37 +281,15 @@ class Enemy {
     float dx = targetX - x;
     float dy = targetY - y;
     float angle = atan2(dy, dx);
-    
+
     float nextX = x + cos(angle) * speed;
     float nextY = y + sin(angle) * speed;
 
-    // Verifica colisão com obstaculos no caminho direto
     if (!colisao(nextX, nextY)) {
-      // Sem colisão, segue em frente
       x = nextX;
       y = nextY;
-    } else {
-      // Tentativa de desvio - tenta virar 90 graus para esquerda ou direita
-      float angleLeft = angle - HALF_PI;
-      float angleRight = angle + HALF_PI;
-
-      float nextLeftX = x + cos(angleLeft) * speed;
-      float nextLeftY = y + sin(angleLeft) * speed;
-
-      float nextRightX = x + cos(angleRight) * speed;
-      float nextRightY = y + sin(angleRight) * speed;
-
-      if (!colisao(nextLeftX, nextLeftY)) {
-        x = nextLeftX;
-        y = nextLeftY;
-      } else if (!colisao(nextRightX, nextRightY)) {
-        x = nextRightX;
-        y = nextRightY;
-      }
-      // Se ambos os lados estiverem bloqueados, inimigo fica parado neste frame
     }
 
-    // Atualiza direção para animação
     if (abs(dx) > abs(dy)) {
       lastDir = (dx > 0) ? 2 : 1;
     } else {
@@ -363,33 +297,24 @@ class Enemy {
     }
   }
 
-  // Função que verifica colisão com todos os obstáculos dado um ponto
   boolean colisao(float testX, float testY) {
     for (Obstaculo o : obstaculos) {
-      if (o.colide(testX, testY, 30)) {
-        return true;
-      }
+      if (o.colide(testX, testY, 20)) return true;
     }
     for (ObstaculoD o : obstaculosD) {
-      if (o.colide(testX, testY, 30)) {
-        return true;
-      }
+      if (o.colide(testX, testY, 20)) return true;
     }
     return false;
   }
 
   void display() {
     PImage sprite = enemySprites[lastDir][animationFrame % 6];
-    if (sprite != null) {
-      image(sprite, x, y, 30, 30);
-    } else {
-      fill(255, 0, 0);
-      ellipse(x, y, 30, 30);
-    }
+    if (sprite != null) image(sprite, x, y, 30, 30);
+    else { fill(255, 0, 0); ellipse(x, y, 30, 30); }
   }
 
   boolean hitsCowboy(float cx, float cy) {
-    return dist(x, y, cx, cy) < 30;
+    return dist(x, y, cx, cy) < 25;
   }
 }
 
@@ -410,12 +335,8 @@ class Bullet {
   }
 
   void display() {
-    if (bulletImg != null) {
-      image(bulletImg, x, y, 10, 10);
-    } else {
-      fill(0);
-      ellipse(x, y, 10, 10);
-    }
+    if (bulletImg != null) image(bulletImg, x, y, 10, 10);
+    else { fill(0); ellipse(x, y, 10, 10); }
   }
 
   boolean hits(float tx, float ty, float r) {
@@ -423,7 +344,7 @@ class Bullet {
   }
 
   boolean offscreen() {
-    return (x < 0 || x > width || y < 0 || y > height);
+    return x < 0 || x > width || y < 0 || y > height;
   }
 }
 
@@ -438,13 +359,8 @@ class Obstaculo {
   }
 
   void display() {
-    if (obstacleImg != null) {
-      image(obstacleImg, x, y, w, h);
-    } else {
-      fill(100);
-      rectMode(CENTER);
-      rect(x, y, w, h);
-    }
+    if (obstacleImg != null) image(obstacleImg, x, y, w, h);
+    else { fill(100); rectMode(CENTER); rect(x, y, w, h); }
   }
 
   boolean colide(float px, float py, float r) {
@@ -464,13 +380,8 @@ class ObstaculoD {
   }
 
   void display() {
-    if (obstacleDImg != null) {
-      image(obstacleDImg, x, y, w, h);
-    } else {
-      fill(150);
-      rectMode(CENTER);
-      rect(x, y, w, h);
-    }
+    if (obstacleDImg != null) image(obstacleDImg, x, y, w, h);
+    else { fill(150); rectMode(CENTER); rect(x, y, w, h); }
   }
 
   boolean colide(float px, float py, float r) {
