@@ -146,7 +146,7 @@ void draw() {
   textAlign(LEFT, TOP);
   text("Pontuação: " + score, 10, 10);
 
-  // Vidas no canto direito, com margem de 10px da borda direita
+  
   String vidasText = "Vidas: " + lives;
   float vidasTextWidth = textWidth(vidasText);
   text(vidasText, width - vidasTextWidth - 10, 10);
