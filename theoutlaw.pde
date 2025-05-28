@@ -19,7 +19,10 @@ ArrayList<Obstaculo> obstaculos;
 ArrayList<ObstaculoD> obstaculosD;
 
 int score = 0;
+int highScore = 0;  // Recorde
 int lives = 3;
+int wave = 1;       // Wave atual
+
 String gameState = "menu";
 
 boolean imune = false;
@@ -84,7 +87,8 @@ void draw() {
     text("Game Over", width / 2, height / 2 - 20);
     textSize(20);
     text("Pontuação: " + score, width / 2, height / 2 + 20);
-    text("Pressione ESPAÇO para tentar novamente", width / 2, height / 2 + 60);
+    text("Recorde: " + highScore, width / 2, height / 2 + 50);
+    text("Pressione ESPAÇO para tentar novamente", width / 2, height / 2 + 90);
     return;
   }
 
@@ -141,22 +145,37 @@ void draw() {
     }
   }
 
+  // Atualizar recorde
+  if (score > highScore) {
+    highScore = score;
+  }
+
+  // Mostrar HUD no topo da tela
   fill(255);
   textSize(16);
   textAlign(LEFT, TOP);
   text("Pontuação: " + score, 10, 10);
 
-  
+  String highScoreText = "Recorde: " + highScore;
+  text(highScoreText, 10, 30);
+
+  String waveText = "Wave: " + wave;
+  float waveTextWidth = textWidth(waveText);
+  text(waveText, width - waveTextWidth - 10, 10);
+
   String vidasText = "Vidas: " + lives;
   float vidasTextWidth = textWidth(vidasText);
-  text(vidasText, width - vidasTextWidth - 10, 10);
+  text(vidasText, width - vidasTextWidth - 10, 30);
 
   if (imune) {
     fill(255, 0, 0);
     text("IMUNE!", 10, 60);
   }
 
+  // Quando acabar os inimigos, aumenta wave e inimigos
   if (enemies.size() == 0) {
+    wave++;
+    numEnemies += 2; // aumenta inimigos a cada wave
     for (int i = 0; i < numEnemies; i++) {
       enemies.add(new Enemy(random(width), random(height), 1.5));
     }
@@ -183,12 +202,14 @@ void startGame() {
   gameState = "playing";
   score = 0;
   lives = 3;
+  wave = 1;
   imune = false;
   imuneTimer = 0;
 
   cowboy = new Cowboy(width / 2, height / 2);
   bullets.clear();
   enemies.clear();
+  numEnemies = 5;  // reset quantidade de inimigos na wave 1
   for (int i = 0; i < numEnemies; i++) {
     enemies.add(new Enemy(random(width), random(height), 1.5));
   }
@@ -398,11 +419,11 @@ class Bullet {
   }
 
   boolean hits(float tx, float ty, float r) {
-    return dist(x, y, tx, ty) < r / 2;
+    return dist(x, y, tx, ty) < r;
   }
 
   boolean offscreen() {
-    return x < 0 || x > width || y < 0 || y > height;
+    return (x < 0 || x > width || y < 0 || y > height);
   }
 }
 
@@ -418,18 +439,17 @@ class Obstaculo {
 
   void display() {
     if (obstacleImg != null) {
-      imageMode(CORNER);
       image(obstacleImg, x, y, w, h);
-      imageMode(CENTER);
     } else {
       fill(100);
+      rectMode(CENTER);
       rect(x, y, w, h);
     }
   }
 
-  boolean colide(float cx, float cy, float cr) {
-    return cx + cr / 2 > x && cx - cr / 2 < x + w &&
-           cy + cr / 2 > y && cy - cr / 2 < y + h;
+  boolean colide(float px, float py, float r) {
+    return (px + r > x - w / 2 && px - r < x + w / 2 &&
+            py + r > y - h / 2 && py - r < y + h / 2);
   }
 }
 
@@ -445,17 +465,16 @@ class ObstaculoD {
 
   void display() {
     if (obstacleDImg != null) {
-      imageMode(CORNER);
       image(obstacleDImg, x, y, w, h);
-      imageMode(CENTER);
     } else {
-      fill(120);
+      fill(150);
+      rectMode(CENTER);
       rect(x, y, w, h);
     }
   }
 
-  boolean colide(float cx, float cy, float cr) {
-    return cx + cr / 2 > x && cx - cr / 2 < x + w &&
-           cy + cr / 2 > y && cy - cr / 2 < y + h;
+  boolean colide(float px, float py, float r) {
+    return (px + r > x - w / 2 && px - r < x + w / 2 &&
+            py + r > y - h / 2 && py - r < y + h / 2);
   }
 }
