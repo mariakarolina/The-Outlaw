@@ -308,33 +308,53 @@ class Enemy {
     float nextX = x + cos(angle) * speed;
     float nextY = y + sin(angle) * speed;
 
-    // Verifica colisão com obstaculos
-    boolean colidiu = false;
-    for (Obstaculo o : obstaculos) {
-      if (o.colide(nextX, nextY, 30)) {  // 30 é o tamanho do inimigo (raio)
-        colidiu = true;
-        break;
-      }
-    }
-    if (!colidiu) {
-      for (ObstaculoD o : obstaculosD) {
-        if (o.colide(nextX, nextY, 30)) {
-          colidiu = true;
-          break;
-        }
-      }
-    }
-
-    if (!colidiu) {
+    // Verifica colisão com obstaculos no caminho direto
+    if (!colisao(nextX, nextY)) {
+      // Sem colisão, segue em frente
       x = nextX;
       y = nextY;
+    } else {
+      // Tentativa de desvio - tenta virar 90 graus para esquerda ou direita
+      float angleLeft = angle - HALF_PI;
+      float angleRight = angle + HALF_PI;
+
+      float nextLeftX = x + cos(angleLeft) * speed;
+      float nextLeftY = y + sin(angleLeft) * speed;
+
+      float nextRightX = x + cos(angleRight) * speed;
+      float nextRightY = y + sin(angleRight) * speed;
+
+      if (!colisao(nextLeftX, nextLeftY)) {
+        x = nextLeftX;
+        y = nextLeftY;
+      } else if (!colisao(nextRightX, nextRightY)) {
+        x = nextRightX;
+        y = nextRightY;
+      }
+      // Se ambos os lados estiverem bloqueados, inimigo fica parado neste frame
     }
-    
+
+    // Atualiza direção para animação
     if (abs(dx) > abs(dy)) {
       lastDir = (dx > 0) ? 2 : 1;
     } else {
       lastDir = (dy > 0) ? 0 : 3;
     }
+  }
+
+  // Função que verifica colisão com todos os obstáculos dado um ponto
+  boolean colisao(float testX, float testY) {
+    for (Obstaculo o : obstaculos) {
+      if (o.colide(testX, testY, 30)) {
+        return true;
+      }
+    }
+    for (ObstaculoD o : obstaculosD) {
+      if (o.colide(testX, testY, 30)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void display() {
