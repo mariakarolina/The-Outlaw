@@ -20,7 +20,7 @@ ArrayList<ObstaculoD> obstaculosD;
 
 int score = 0;
 int lives = 3;
-String gameState = "playing";
+String gameState = "menu";
 
 boolean imune = false;
 int imuneTimer = 0;
@@ -67,6 +67,16 @@ void draw() {
     image(bgImg, width / 2, height / 2, width, height);
   }
 
+  if (gameState.equals("menu")) {
+    fill(255);
+    textAlign(CENTER);
+    textSize(40);
+    text("The Outlaw", width / 2, height / 2 - 40);
+    textSize(20);
+    text("Pressione ESPAÇO para começar", width / 2, height / 2 + 20);
+    return;
+  }
+
   if (gameState.equals("gameover")) {
     fill(255);
     textAlign(CENTER);
@@ -74,6 +84,7 @@ void draw() {
     text("Game Over", width / 2, height / 2 - 20);
     textSize(20);
     text("Pontuação: " + score, width / 2, height / 2 + 20);
+    text("Pressione ESPAÇO para tentar novamente", width / 2, height / 2 + 60);
     return;
   }
 
@@ -82,7 +93,7 @@ void draw() {
   }
   
   for (ObstaculoD o : obstaculosD) {
-  o.display();
+    o.display();
   }
 
   cowboy.update();
@@ -132,8 +143,13 @@ void draw() {
 
   fill(255);
   textSize(16);
-  text("Pontuação: " + score, 10, 20);
-  text("Vidas: " + lives, 10, 40);
+  textAlign(LEFT, TOP);
+  text("Pontuação: " + score, 10, 10);
+
+  // Vidas no canto direito, com margem de 10px da borda direita
+  String vidasText = "Vidas: " + lives;
+  float vidasTextWidth = textWidth(vidasText);
+  text(vidasText, width - vidasTextWidth - 10, 10);
 
   if (imune) {
     fill(255, 0, 0);
@@ -151,11 +167,30 @@ void draw() {
 
 void keyPressed() {
   if (key == ' ') {
-    float dirX = cowboy.lastShootDirX;
-    float dirY = cowboy.lastShootDirY;
-    if (dirX != 0 || dirY != 0) {
-      bullets.add(new Bullet(cowboy.x, cowboy.y, dirX * 5, dirY * 5));
+    if (gameState.equals("menu") || gameState.equals("gameover")) {
+      startGame();
+    } else if (gameState.equals("playing")) {
+      float dirX = cowboy.lastShootDirX;
+      float dirY = cowboy.lastShootDirY;
+      if (dirX != 0 || dirY != 0) {
+        bullets.add(new Bullet(cowboy.x, cowboy.y, dirX * 5, dirY * 5));
+      }
     }
+  }
+}
+
+void startGame() {
+  gameState = "playing";
+  score = 0;
+  lives = 3;
+  imune = false;
+  imuneTimer = 0;
+
+  cowboy = new Cowboy(width / 2, height / 2);
+  bullets.clear();
+  enemies.clear();
+  for (int i = 0; i < numEnemies; i++) {
+    enemies.add(new Enemy(random(width), random(height), 1.5));
   }
 }
 
@@ -231,11 +266,11 @@ class Cowboy {
       }
     } 
     for (ObstaculoD o : obstaculosD) {
-  if (o.colide(nextX, nextY, 40)) {
-    colidiu = true;
-    break;
-  }
-}
+      if (o.colide(nextX, nextY, 40)) {
+        colidiu = true;
+        break;
+      }
+    }
 
     if (!colidiu) {
       x = nextX;
@@ -269,9 +304,32 @@ class Enemy {
     float dx = targetX - x;
     float dy = targetY - y;
     float angle = atan2(dy, dx);
-    x += cos(angle) * speed;
-    y += sin(angle) * speed;
+    
+    float nextX = x + cos(angle) * speed;
+    float nextY = y + sin(angle) * speed;
 
+    // Verifica colisão com obstaculos
+    boolean colidiu = false;
+    for (Obstaculo o : obstaculos) {
+      if (o.colide(nextX, nextY, 30)) {  // 30 é o tamanho do inimigo (raio)
+        colidiu = true;
+        break;
+      }
+    }
+    if (!colidiu) {
+      for (ObstaculoD o : obstaculosD) {
+        if (o.colide(nextX, nextY, 30)) {
+          colidiu = true;
+          break;
+        }
+      }
+    }
+
+    if (!colidiu) {
+      x = nextX;
+      y = nextY;
+    }
+    
     if (abs(dx) > abs(dy)) {
       lastDir = (dx > 0) ? 2 : 1;
     } else {
